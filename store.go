@@ -14,6 +14,7 @@ type Store interface {
 	IsEmailOnUse(email string) (bool ,error)
 	UpdateUserLangs(id, nativeLang, learningLang string) (bool, error)
 	SearchUser(native, learning string) ([]User, error)
+	GetNotifyTokenByID(id string) (*User, error)
 
 	// Friends
 	GetUsersFriendRequest(userId string) ([]string, error)
@@ -50,6 +51,12 @@ func (s *Storage) CreateUser(u *User) (*User, error) {
 func (s *Storage) GetUserByID(id string) (*User, error) {
 	var u User
 	err := s.db.QueryRow("SELECT id, email FROM users WHERE id = ?", id).Scan(&u.ID, &u.Email)
+	return &u, err
+}
+
+func (s *Storage) GetNotifyTokenByID(id string) (*User, error) {
+	var u User
+	err := s.db.QueryRow("SELECT notifyToken FROM users WHERE id = ?", id).Scan(&u.NotifyToken)
 	return &u, err
 }
 

@@ -62,6 +62,13 @@ func (s *FriendsService) handleSendFriendRequest(w http.ResponseWriter, r *http.
 		return
 	}
 
+	userWithNotifyToken,err := s.store.GetNotifyTokenByID(targetId)
+	if err!=nil {
+		if userWithNotifyToken != nil && userWithNotifyToken.NotifyToken != "" {
+			sendNotificationToToken(userWithNotifyToken.NotifyToken, "New Friend Request", "You recieved a new friend request")
+		}
+	}
+
 	s.store.UpdateUsersFriendRequests(targetId, string(newTargetFriendRequestsJSON))
 	WriteJSON(w, http.StatusOK, "{}")
 }

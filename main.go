@@ -25,6 +25,12 @@ func main() {
 		log.Fatal(err)
 	}
 
+	err = initFirebase()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	store := NewStorage(db)
 	api := NewAPIServer(":3000", store)
 	api.Serve()

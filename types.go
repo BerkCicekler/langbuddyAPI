@@ -4,6 +4,7 @@ import "time"
 
 type User struct {
 	ID             int64     `json:"id"`
+	NotifyToken    string    `json:"notifyToken"`
 	UserName       string    `json:"userName"`
 	Email 		   string 	 `json:"email"` 
 	Password       string    `json:"password"`
