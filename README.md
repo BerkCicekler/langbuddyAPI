@@ -5,7 +5,8 @@ There will be many missing and bad coded parts in this project cause for now i j
 
 
 ## Features
-JWT Token<br>
+JWT Access Token<br>
+JWT Refresh Token<br>
 Account registration/login<br>
 Freind Requests<br>
 Random Friend Search <br>
