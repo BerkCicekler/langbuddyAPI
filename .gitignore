@@ -1,2 +1,5 @@
 languagebuddy-3a272-firebase-adminsdk-gtk54-4179a964ef.json
 *.exe
+
+.DS_Store
+langbuddyAPI

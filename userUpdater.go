@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -17,7 +18,7 @@ func NewUserUpdaterService(s *Store) *UserUpdaterService {
 }
 
 func (s *UserUpdaterService) RegisterRouters(r *mux.Router) {
-	r.HandleFunc("/user/language",WithJWTAuth(s.handleLanguageSetter, s.store)).Methods("POST")
+	r.HandleFunc("/user/language", WithJWTAuth(s.handleLanguageSetter, s.store)).Methods("POST")
 }
 
 func (s *UserUpdaterService) handleLanguageSetter(w http.ResponseWriter, r *http.Request) {
@@ -50,6 +51,7 @@ func (s *UserUpdaterService) handleLanguageSetter(w http.ResponseWriter, r *http
 	isUpdated, err := s.store.UpdateUserLangs(claims["userID"].(string), payload["native"].(string), payload["learning"].(string))
 
 	if err != nil || !isUpdated {
+		log.Print(err)
 		http.Error(w, "MySQL Error", http.StatusBadRequest)
 		return
 	}
