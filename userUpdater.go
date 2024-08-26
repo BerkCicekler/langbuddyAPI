@@ -56,6 +56,6 @@ func (s *UserUpdaterService) handleLanguageSetter(w http.ResponseWriter, r *http
 		return
 	}
 
-	WriteJSON(w, http.StatusOK, "{}")
+	WriteJSON(w, http.StatusOK, make(map[string]interface{}))
 
 }

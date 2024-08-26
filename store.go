@@ -50,7 +50,10 @@ func (s *Storage) CreateUser(u *User) (*User, error) {
 
 func (s *Storage) GetUserByID(id string) (*User, error) {
 	var u User
-	err := s.db.QueryRow("SELECT id, email FROM users WHERE id = ?", id).Scan(&u.ID, &u.Email)
+	var tempFriends, tempRequests string
+	err := s.db.QueryRow("SELECT id, username, email, password, nativeLanguage, learningLanguage, friends, receivedFriendRequests FROM users WHERE id = ?", id).Scan(&u.ID, &u.Email, &u.UserName, &u.Password, &u.NativeLanguage, &u.LearningLanguage, &tempFriends, &tempRequests)
+	json.Unmarshal([]byte(tempFriends), &u.Friends)
+	json.Unmarshal([]byte(tempRequests), &u.ReceivedFriendRequests)
 	return &u, err
 }
 
@@ -63,7 +66,7 @@ func (s *Storage) GetNotifyTokenByID(id string) (*User, error) {
 func (s *Storage) GetUserByEmail(email string) (*User, error) {
 	var u User
 	var tempFriends, tempRequests string
-	err := s.db.QueryRow("SELECT id, username, email, password, nativeLanguage, learningLanguage, friends, recievedFriendRequests FROM users WHERE email = ?", email).Scan(&u.ID, &u.Email, &u.UserName, &u.Password, &u.NativeLanguage, &u.LearningLanguage, &tempFriends, &tempRequests)
+	err := s.db.QueryRow("SELECT id, username, email, password, nativeLanguage, learningLanguage, friends, receivedFriendRequests FROM users WHERE email = ?", email).Scan(&u.ID, &u.Email, &u.UserName, &u.Password, &u.NativeLanguage, &u.LearningLanguage, &tempFriends, &tempRequests)
 	json.Unmarshal([]byte(tempFriends), &u.Friends)
 	json.Unmarshal([]byte(tempRequests), &u.ReceivedFriendRequests)
 	return &u, err
@@ -111,7 +114,7 @@ func (s *Storage) SearchUser(usersNative, usersLearning string) ([]User, error) 
 
 func (s *Storage) GetUsersFriendRequest(userId string) ([]string, error) {
 	var jsonString string
-	err := s.db.QueryRow("SELECT recievedFriendRequests FROM users WHERE id = ?", userId).Scan(&jsonString)
+	err := s.db.QueryRow("SELECT receivedFriendRequests FROM users WHERE id = ?", userId).Scan(&jsonString)
 	if err != nil {
 		log.Print(err)
 		return nil, err
@@ -146,7 +149,7 @@ func (s *Storage) GetUsersFriends(userId string) ([]string, error) {
 }
 
 func (s *Storage) UpdateUsersFriendRequests(userId string, newJsonList string) error {
-	result, err := s.db.Exec("UPDATE users SET recievedFriendRequests = ? WHERE id = ?", newJsonList, userId)
+	result, err := s.db.Exec("UPDATE users SET receivedFriendRequests = ? WHERE id = ?", newJsonList, userId)
 	if err != nil {
 		return err
 	}
