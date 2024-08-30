@@ -51,7 +51,7 @@ func (s *Storage) CreateUser(u *User) (*User, error) {
 func (s *Storage) GetUserByID(id string) (*User, error) {
 	var u User
 	var tempFriends, tempRequests string
-	err := s.db.QueryRow("SELECT id, username, email, password, nativeLanguage, learningLanguage, friends, receivedFriendRequests FROM users WHERE id = ?", id).Scan(&u.ID, &u.Email, &u.UserName, &u.Password, &u.NativeLanguage, &u.LearningLanguage, &tempFriends, &tempRequests)
+	err := s.db.QueryRow("SELECT id, username, email, nativeLanguage, learningLanguage, friends, receivedFriendRequests FROM users WHERE id = ?", id).Scan(&u.ID, &u.UserName, &u.Email, &u.NativeLanguage, &u.LearningLanguage, &tempFriends, &tempRequests)
 	json.Unmarshal([]byte(tempFriends), &u.Friends)
 	json.Unmarshal([]byte(tempRequests), &u.ReceivedFriendRequests)
 	return &u, err
@@ -66,7 +66,7 @@ func (s *Storage) GetNotifyTokenByID(id string) (*User, error) {
 func (s *Storage) GetUserByEmail(email string) (*User, error) {
 	var u User
 	var tempFriends, tempRequests string
-	err := s.db.QueryRow("SELECT id, username, email, password, nativeLanguage, learningLanguage, friends, receivedFriendRequests FROM users WHERE email = ?", email).Scan(&u.ID, &u.Email, &u.UserName, &u.Password, &u.NativeLanguage, &u.LearningLanguage, &tempFriends, &tempRequests)
+	err := s.db.QueryRow("SELECT id, username, email, password, nativeLanguage, learningLanguage, friends, receivedFriendRequests FROM users WHERE email = ?", email).Scan(&u.ID, &u.UserName, &u.Email, &u.Password, &u.NativeLanguage, &u.LearningLanguage, &tempFriends, &tempRequests)
 	json.Unmarshal([]byte(tempFriends), &u.Friends)
 	json.Unmarshal([]byte(tempRequests), &u.ReceivedFriendRequests)
 	return &u, err
