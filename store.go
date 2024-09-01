@@ -3,7 +3,9 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
+	"strings"
 )
 
 type Store interface {
@@ -21,6 +23,7 @@ type Store interface {
 	GetUsersFriends(userId string) ([]string, error)
 	UpdateUsersFriendRequests(userId, newJsonList string) error
 	UpdateUsersFriends(userId, newJsonList string) error
+	GetFriendDataFromList(ids []string) ([]Friend, error)
 }
 
 type Storage struct {
@@ -174,4 +177,36 @@ func (s *Storage) UpdateUsersFriends(userId string, newJsonList string) error {
 	}
 
 	return nil
+}
+
+func (s *Storage) GetFriendDataFromList(ids []string) ([]Friend, error) {
+	var u []Friend
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		args[i] = id
+	}
+
+	stmt := `SELECT id, username from users where id in (?` + strings.Repeat(",?", len(args)-1) + `)`
+
+	fmt.Println()
+
+	rows, err := s.db.Query(stmt, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var user Friend
+		if err := rows.Scan(&user.ID, &user.UserName); err != nil {
+			return nil, err
+		}
+		u = append(u, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }

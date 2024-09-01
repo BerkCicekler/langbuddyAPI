@@ -17,9 +17,68 @@ func NewFriendsService(s *Store) *FriendsService {
 }
 
 func (s *FriendsService) RegisterRouters(r *mux.Router) {
+	r.HandleFunc("/friends/data", WithJWTAuth(s.handleGetFriendsAndRequestsData, s.store)).Methods("GET")
 	r.HandleFunc("/friends/accept", WithJWTAuth(s.handleAcceptFriendRequest, s.store)).Methods("POST")
 	r.HandleFunc("/friends/reject", WithJWTAuth(s.handleRejectFriendRequest, s.store)).Methods("POST")
 	r.HandleFunc("/friends/sendRequest", WithJWTAuth(s.handleSendFriendRequest, s.store)).Methods("POST")
+}
+
+func (s *FriendsService) handleGetFriendsAndRequestsData(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	var payload map[string]interface{}
+	err = json.Unmarshal(body, &payload)
+	if err != nil {
+		http.Error(w, "Error unmarshaling JSON", http.StatusBadRequest)
+		return
+	}
+
+	userId := GetUserIdFromRequest(r)
+
+	usersFriendRequest, err := s.store.GetUsersFriendRequest(userId)
+	if err != nil {
+		http.Error(w, "DB error", http.StatusBadRequest)
+		return
+	}
+
+	usersFriends, err := s.store.GetUsersFriends(userId)
+	if err != nil {
+		http.Error(w, "DB error", http.StatusBadRequest)
+		return
+	}
+
+	userFriends := []Friend{}
+
+	if len(usersFriends) > 0 {
+		userFriends, err = s.store.GetFriendDataFromList(usersFriends)
+		if err != nil {
+			http.Error(w, "DB error", http.StatusBadRequest)
+			return
+		}
+	}
+
+	userFriendRequests := []Friend{}
+
+	if len(usersFriendRequest) > 0 {
+		userFriendRequests, err = s.store.GetFriendDataFromList((usersFriendRequest))
+
+		if err != nil {
+			http.Error(w, "DB error", http.StatusBadRequest)
+			return
+		}
+	}
+
+	response := map[string]interface{}{
+		"friends":         userFriends,
+		"friend_requests": userFriendRequests,
+	}
+
+	WriteJSON(w, http.StatusOK, response)
 }
 
 func (s *FriendsService) handleSendFriendRequest(w http.ResponseWriter, r *http.Request) {
@@ -45,14 +104,14 @@ func (s *FriendsService) handleSendFriendRequest(w http.ResponseWriter, r *http.
 	targetId := payload["targetId"].(string)
 	userId := GetUserIdFromRequest(r)
 
-	targetFriendRequests,err := s.store.GetUsersFriendRequest(targetId)
+	targetFriendRequests, err := s.store.GetUsersFriendRequest(targetId)
 	if err != nil {
 		http.Error(w, "DB error", http.StatusBadRequest)
 		return
 	}
 
 	if ContainsSlice(targetFriendRequests, userId) {
-		WriteJSON(w, http.StatusOK, "{}")
+		WriteJSON(w, http.StatusOK, make(map[string]interface{}))
 		return
 	}
 
@@ -62,15 +121,15 @@ func (s *FriendsService) handleSendFriendRequest(w http.ResponseWriter, r *http.
 		return
 	}
 
-	userWithNotifyToken,err := s.store.GetNotifyTokenByID(targetId)
-	if err!=nil {
+	userWithNotifyToken, err := s.store.GetNotifyTokenByID(targetId)
+	if err != nil {
 		if userWithNotifyToken != nil && userWithNotifyToken.NotifyToken != "" {
 			sendNotificationToToken(userWithNotifyToken.NotifyToken, "New Friend Request", "You recieved a new friend request")
 		}
 	}
 
 	s.store.UpdateUsersFriendRequests(targetId, string(newTargetFriendRequestsJSON))
-	WriteJSON(w, http.StatusOK, "{}")
+	WriteJSON(w, http.StatusOK, make(map[string]interface{}))
 }
 
 func (s *FriendsService) handleAcceptFriendRequest(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +160,7 @@ func (s *FriendsService) handleAcceptFriendRequest(w http.ResponseWriter, r *htt
 		return
 	}
 
-	usersFriendRequests,err := s.store.GetUsersFriendRequest(userId)
+	usersFriendRequests, err := s.store.GetUsersFriendRequest(userId)
 	if err != nil {
 		http.Error(w, "DB error", http.StatusBadRequest)
 		return
@@ -111,19 +170,19 @@ func (s *FriendsService) handleAcceptFriendRequest(w http.ResponseWriter, r *htt
 		return
 	}
 
-	newFriendRequestsJSON,err := json.Marshal(RemoveElement(usersFriendRequests, targetId))
+	newFriendRequestsJSON, err := json.Marshal(RemoveElement(usersFriendRequests, targetId))
 	if err != nil {
 		http.Error(w, "DB error", http.StatusBadRequest)
 		return
 	}
-	
+
 	usersFriends, err := s.store.GetUsersFriends(userId)
 	if err != nil {
 		http.Error(w, "DB error", http.StatusBadRequest)
 		return
 	}
 
-	newUsersFriendsJSON, err := json.Marshal(append(usersFriends, targetId)) 
+	newUsersFriendsJSON, err := json.Marshal(append(usersFriends, targetId))
 	if err != nil {
 		http.Error(w, "JSON Marshal Error", http.StatusBadRequest)
 		return
@@ -134,7 +193,7 @@ func (s *FriendsService) handleAcceptFriendRequest(w http.ResponseWriter, r *htt
 		http.Error(w, "DB error", http.StatusBadRequest)
 		return
 	}
-	targetUserFriendsJSON, err :=  json.Marshal(append(targetUserFriends, userId))  
+	targetUserFriendsJSON, err := json.Marshal(append(targetUserFriends, userId))
 	if err != nil {
 		http.Error(w, "JSON Marshal Error", http.StatusBadRequest)
 		return
@@ -143,7 +202,7 @@ func (s *FriendsService) handleAcceptFriendRequest(w http.ResponseWriter, r *htt
 	s.store.UpdateUsersFriendRequests(userId, string(newFriendRequestsJSON))
 	s.store.UpdateUsersFriends(userId, string(newUsersFriendsJSON))
 	s.store.UpdateUsersFriends(targetId, string(targetUserFriendsJSON))
-	WriteJSON(w, http.StatusOK, "{}")
+	WriteJSON(w, http.StatusOK, make(map[string]interface{}))
 }
 
 func (s *FriendsService) handleRejectFriendRequest(w http.ResponseWriter, r *http.Request) {
@@ -174,23 +233,23 @@ func (s *FriendsService) handleRejectFriendRequest(w http.ResponseWriter, r *htt
 		return
 	}
 
-	usersFriendRequests,err := s.store.GetUsersFriendRequest(userId)
+	usersFriendRequests, err := s.store.GetUsersFriendRequest(userId)
 	if err != nil {
 		http.Error(w, "DB error", http.StatusBadRequest)
 		return
 	}
 
 	if !ContainsSlice(usersFriendRequests, targetId) {
-		WriteJSON(w, http.StatusOK, "{}")
+		WriteJSON(w, http.StatusOK, make(map[string]interface{}))
 		return
 	}
 
-	newFriendRequestsJSON,err := json.Marshal(RemoveElement(usersFriendRequests, targetId))
+	newFriendRequestsJSON, err := json.Marshal(RemoveElement(usersFriendRequests, targetId))
 	if err != nil {
 		http.Error(w, "DB error", http.StatusBadRequest)
 		return
 	}
 
 	s.store.UpdateUsersFriendRequests(userId, string(newFriendRequestsJSON))
-	WriteJSON(w, http.StatusOK, "{}")
+	WriteJSON(w, http.StatusOK, make(map[string]interface{}))
 }
