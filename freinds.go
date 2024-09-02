@@ -74,8 +74,8 @@ func (s *FriendsService) handleGetFriendsAndRequestsData(w http.ResponseWriter, 
 	}
 
 	response := map[string]interface{}{
-		"friends":         userFriends,
-		"friend_requests": userFriendRequests,
+		"friends":        userFriends,
+		"friendRequests": userFriendRequests,
 	}
 
 	WriteJSON(w, http.StatusOK, response)
