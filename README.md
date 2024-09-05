@@ -10,5 +10,5 @@ JWT Refresh Token<br>
 Account registration/login<br>
 Freind Requests<br>
 Random Friend Search <br>
-Push Notification via Firebase messaging
+Push Notification via Firebase messaging <br>
 Chat system (websocket)
