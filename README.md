@@ -11,3 +11,4 @@ Account registration/login<br>
 Freind Requests<br>
 Random Friend Search <br>
 Push Notification via Firebase messaging
+Chat system (websocket)
