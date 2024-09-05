@@ -35,6 +35,9 @@ func (s *APIServer) Serve() {
 	friendsService := NewFriendsService(&s.store)
 	friendsService.RegisterRouters(subRouter)
 
+	chatService := NewChatService(&s.store)
+	chatService.RegisterRouters(subRouter)
+
 	log.Println("Starting the API server at", s.addr)
 
 	log.Fatal(http.ListenAndServe(s.addr, subRouter))

@@ -27,11 +27,13 @@ func main() {
 
 	err = initFirebase()
 
+	roomMap = make( map[string]*room)
+
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	store := NewStorage(db)
-	api := NewAPIServer(":3000", store)
+	api := NewAPIServer(":8080", store)
 	api.Serve()
 }
