@@ -4,9 +4,7 @@ import "github.com/gorilla/websocket"
 
 type client struct {
 	socket *websocket.Conn
-
 	receive chan []byte
-
 	room *room
 }
 
@@ -17,7 +15,8 @@ func (c *client) read() {
 		if err != nil {
 			return
 		}
-		c.room.forward <- msg
+		// Mesajı room.forward kanalına gönderirken gönderen client'i de belirtiyoruz
+		c.room.forward <- message{data: msg, sender: c}
 	}
 }
 
