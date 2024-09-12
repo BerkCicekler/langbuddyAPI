@@ -19,16 +19,16 @@ func NewChatService(s *Store) *ChatService {
 	}
 }
 
-func (s *ChatService) RegisterRouters(r *mux.Router ) {
-	r.HandleFunc("/chat/{id}", WithJWTAuth(s.handleWebSocket, s.store))
+func (s *ChatService) RegisterRouters(r *mux.Router) {
+	r.HandleFunc("/chat/{id}", s.handleWebSocket)
 }
 
 var upgrader = websocket.Upgrader{
-	ReadBufferSize: 1024,
+	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-        return true
-    },
+		return true
+	},
 }
 
 var roomMap map[string]*room
@@ -36,11 +36,11 @@ var roomMap map[string]*room
 func (s *ChatService) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	roomId := mux.Vars(r)["id"] // Gets params
 	fmt.Println(roomId)
-	var room *room;
-	var ok bool;
+	var room *room
+	var ok bool
 	room, ok = roomMap[roomId]
-	if  !ok {
-		room = newRoom();
+	if !ok {
+		room = newRoom()
 		roomMap[roomId] = room
 		go room.run()
 	}

@@ -47,5 +47,9 @@ func (s *SearchService) handleSearchUser(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	WriteJSON(w, http.StatusOK, users)
+	response := map[string]interface{}{
+		"searchedUsers": users,
+	}
+
+	WriteJSON(w, http.StatusOK, response)
 }
